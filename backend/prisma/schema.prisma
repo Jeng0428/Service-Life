@@ -1,0 +1,369 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ProfileImage {
+  id           String  @id @default(uuid())
+  fieldname    String?
+  originalname String?
+  encoding     String?
+  mimetype     String?
+  destination  String?
+  filename     String?
+  path         String
+  size         Int?
+  User         User[]
+}
+
+model DocumentImage {
+  id           String  @id @default(uuid())
+  fieldname    String?
+  originalname String?
+  encoding     String?
+  mimetype     String?
+  destination  String?
+  filename     String?
+  path         String
+  size         Int?
+  User         User[]
+}
+
+model User {
+  id              String        @id @default(uuid())
+  email           String?
+  phoneNo         String
+  name            String
+  profile_pic     ProfileImage? @relation(fields: [profile_pic_id], references: [id], onDelete: Cascade)
+  profile_pic_id  String?       @unique
+  address         String
+  role            String        @default("user")
+  document_type   String
+  document_detail String
+
+  createdAt             DateTime                @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime                @updatedAt @db.Timestamptz(3)
+  Otp                   Otp[]
+  Comment               Comment[]
+  RentPaymentSubcriptin RentPaymentSubcriptin[]
+  Complain              Complain[]
+  DocumentImage         DocumentImage?          @relation(fields: [documentImageId], references: [id])
+  documentImageId       String?
+   UserDishes            UserDishes[]
+}
+
+model Otp {
+  id        String   @id @default(uuid())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otp       String
+  isValid   Boolean
+  userId    String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}
+
+model City {
+  id       String     @id @default(uuid())
+  name     String     @unique
+  slug     String     @unique
+  Resident Resident[]
+  foodmenu Foodmenu[]
+}
+
+model FeatureImage {
+  id           String   @id @default(uuid())
+  fieldname    String?
+  originalname String?
+  encoding     String?
+  mimetype     String?
+  destination  String?
+  filename     String?
+  path         String
+  size         Int?
+  Feature      Feature?
+}
+
+model Feature {
+  id               String            @id @default(uuid())
+  feature_name     String            @unique
+  slug             String            @unique
+  icon             FeatureImage      @relation(fields: [feature_image_id], references: [id], onDelete: Cascade)
+  feature_image_id String            @unique
+  FeatureResident  FeatureResident[]
+}
+
+model RoomType {
+  id             String           @id @default(uuid())
+  typeOfRoom     String           @unique
+  slug           String           @unique
+  AvailAbility   AvailAbility[]
+  AdvanceBooking AdvanceBooking[]
+}
+
+model ResidentRoomImage {
+  id           String    @id @default(uuid())
+  fieldname    String?
+  originalname String?
+  encoding     String?
+  mimetype     String?
+  destination  String?
+  filename     String?
+  path         String
+  size         Int?
+  Resident     Resident? @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  residentId   String?
+}
+
+model ResidentCoverImage {
+  id           String    @id @default(uuid())
+  fieldname    String?
+  originalname String?
+  encoding     String?
+  mimetype     String?
+  destination  String?
+  filename     String?
+  path         String
+  size         Int?
+  Resident     Resident? @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  residentId   String?
+}
+
+model ResidentDinningImage {
+  id           String    @id @default(uuid())
+  fieldname    String?
+  originalname String?
+  encoding     String?
+  mimetype     String?
+  destination  String?
+  filename     String?
+  path         String
+  size         Int?
+  Resident     Resident? @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  residentId   String?
+}
+
+model ResidentCommonAreaImage {
+  id           String    @id @default(uuid())
+  fieldname    String?
+  originalname String?
+  encoding     String?
+  mimetype     String?
+  destination  String?
+  filename     String?
+  path         String
+  size         Int?
+  Resident     Resident? @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  residentId   String?
+}
+
+model FeatureResident {
+  feature         Feature  @relation(fields: [featureId], references: [id], onDelete: Cascade)
+  resident        Resident @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  fovarateFeature Boolean  @default(false)
+  residentId      String
+  featureId       String
+
+  @@id([residentId, featureId])
+}
+
+model Location {
+  id        String     @id @default(uuid())
+  latitude  String
+  longitude String
+  state     String
+  zip_code  String
+  address   String
+  Resident  Resident[]
+}
+
+model Resident {
+  id                 String                    @id @default(uuid())
+  name               String
+  city               City                      @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  seoTitle           String
+  location           Location                  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  locationId         String                    @unique
+  FeatureResident    FeatureResident[]
+  description        String
+  hotelSupportNumber String
+  AvailAbility       AvailAbility[]
+  cityId             String
+  googleMapUrl       String
+  roomPhotos         ResidentRoomImage[]
+  coverImage         ResidentCoverImage[]
+  dinningAreaPhotos  ResidentDinningImage[]
+  commonAreaPhotos   ResidentCommonAreaImage[]
+  Schedule_Visit     Schedule_Visit[]
+  AdvanceBooking     AdvanceBooking[]
+  Comment            Comment[]
+    UserDishes         UserDishes[]
+}
+
+enum ScheduleVisitState {
+  scheduled
+  completed
+  canceled
+}
+
+model Schedule_Visit {
+  uid             String             @id @default(uuid())
+  resident        Resident           @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  roomType        String             @default("Single Bed room")
+  user_name       String
+  phoneNo         String
+  date            DateTime           @db.Date
+  time            String
+  residentId      String
+  completionState ScheduleVisitState @default(scheduled)
+  createdAt       DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime           @updatedAt @db.Timestamptz(3)
+}
+
+model AdvanceBooking {
+  uid                 String   @id @default(uuid())
+  resident            Resident @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  roomType            RoomType @relation(fields: [roomTypeName], references: [typeOfRoom], onDelete: Cascade)
+  roomTypeName        String
+  user_name           String
+  phoneNo             String   @unique
+  date                DateTime @db.Date
+  razorpayOrderId     String   @unique
+  residentId          String
+  razorpay_payment_id String?
+  createdAt           DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime @updatedAt @db.Timestamptz(3)
+
+  isPaymentSuccess Boolean @default(false)
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  content    String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resident   Resident @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  userId     String
+  residentId String
+  createdAt  DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([residentId, userId])
+}
+
+model AvailAbility {
+  uid                   String                  @unique @default(uuid())
+  roomType              RoomType                @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+  resident              Resident                @relation(fields: [residentId], references: [id], onDelete: Cascade)
+  price                 Int
+  numberOfOccupancies   Int
+  planIdRazorpay        String?
+  roomTypeId            String
+  residentId            String
+  RentPaymentSubcriptin RentPaymentSubcriptin[]
+
+  @@id([residentId, roomTypeId])
+}
+
+enum RentPaymentStatus {
+  CREATED
+  ACTIVE
+  CANCEL
+}
+
+model RentPaymentSubcriptin {
+  uid               String            @id @default(uuid())
+  status            RentPaymentStatus @default(CREATED)
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availability      AvailAbility      @relation(fields: [availabilityId], references: [uid], onDelete: Cascade)
+  userId            String
+  availabilityId    String
+  planId            String
+  subcriptionId     String            @unique
+  cancelComment     String?
+  roomNo            String
+  razorpayPaymentId String?
+  createdAt         DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime          @updatedAt @db.Timestamptz(3)
+}
+
+enum ComplainState {
+  RESOLVED
+  CREATED
+}
+
+enum ComplainCatagory {
+  ELECTRICAL
+  PLUMBING
+  SNITARY
+}
+
+model Complain {
+  id               String           @id @default(uuid())
+  message          String
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  state            ComplainState    @default(CREATED)
+  createdAt        DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime         @updatedAt @db.Timestamptz(3)
+  ComplainCatagory ComplainCatagory
+}
+
+model TeamMemberImage {
+  id           String       @id @default(uuid())
+  fieldname    String?
+  originalname String?
+  encoding     String?
+  mimetype     String?
+  destination  String?
+  filename     String?
+  path         String
+  size         Int?
+  TeamMember   TeamMember[]
+}
+
+model TeamMember {
+  id                String          @id @default(uuid())
+  name              String
+  title             String
+  facebookUrl       String?
+  linkedinUrl       String?
+  twitterUrl        String?
+  pic               TeamMemberImage @relation(fields: [teamMemberImageId], references: [id], onDelete: Cascade)
+  teamMemberImageId String
+}
+
+
+model Foodmenu {
+  city   City @relation(fields: [cityid], references: [id])
+  cityid  String
+  id         String   @id @default(uuid())
+  menu       Menu[]    
+}
+
+model Menu {
+  date      String   
+  breakfast String[]
+  lunch     String[]   
+  dinner    String[]
+  id        String     @id @default(uuid())
+  foodmenu       Foodmenu     @relation(fields: [foodmenuid], references: [id])
+  foodmenuid     String
+}
+
+model UserDishes {
+  user       User     @relation(fields: [userid], references: [id])
+  userid     String
+  id         String   @id @default(uuid())
+  date       String 
+  foodtype   String
+  dish       String
+  quantity   Int
+  resident   Resident @relation(fields: [residentid], references: [id])
+  residentid String
+}
